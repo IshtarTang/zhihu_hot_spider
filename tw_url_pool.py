@@ -144,7 +144,6 @@ class UrlPool:
         if state_code == 200:
             self.db.set_success(url)
             logging.debug(" 状态码 {}  {}".format(state_code, url))
-
         elif state_code == 404:
             self.db.set_failure(url)
             logging.debug("状态码 {} {}  设置完成".format(state_code, url))

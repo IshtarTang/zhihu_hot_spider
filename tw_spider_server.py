@@ -17,12 +17,15 @@ print("初始化完成")
 async def cache_urlpool(app, loop):
     global urlpool
     logging.info("url 缓存")
-    del urlpool
+    del urlpool  # 删除会自动存到redis里
     logging.info("exit!")
 
 
 @app.route("/task")
 async def get_urls(request):
+    """
+    从url池里获取url
+    """
     count = request.args.get("count", 10)
     try:
         count = int(count)
@@ -34,6 +37,9 @@ async def get_urls(request):
 
 @app.route("/set_status", methods=["POST", ])
 async def set_url_status(request):
+    """
+    设置url状态
+    """
     result = request.json
     urlpool.set_status(result["url"], result["status"])
 
@@ -42,6 +48,9 @@ async def set_url_status(request):
 
 @app.route("/set_hubs", methods=["POST", ])
 async def set_hubs(request):
+    """
+    设置需重复爬的url
+    """
     args = []
     data = request.json
     hubs = data.get("hubs", "[]")
@@ -64,6 +73,9 @@ async def set_hubs(request):
 
 @app.route("/append_urls", methods=["POST", ])
 async def append_to_pool(request):
+    """
+    向url池添加url
+    """
     urls = request.json
     urlpool.add_urls(urls)
     return response.text("append succes")
@@ -71,6 +83,9 @@ async def append_to_pool(request):
 
 @app.route("/append_urls_without_filter", methods=["POST", ])
 async def append_urls_without_filter(request):
+    """
+    向url池添加，但不过滤
+    """
     urls = request.json
     urlpool.add_urls(urls, True)
     return response.text("append succes")
@@ -78,6 +93,9 @@ async def append_urls_without_filter(request):
 
 @app.route("/save_to_db", methods=["POST", ])
 async def save_to_db(request):
+    """
+    存数据库
+    """
     j_text = request.json  # {"table_name": table_name, "kvs": kvs}
 
     table_name = j_text["table_name"]
@@ -96,14 +114,11 @@ async def save_to_db(request):
     return response.text("done")
 
 
-
 @app.route("/test", methods=["get", ])
 async def test(request: sanic.request.Request):
     print(request.headers)
     print(request.headers.get("cookie"))
-
     print("-------------")
-
     return response.text("ok")
 
 

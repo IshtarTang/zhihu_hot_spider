@@ -41,6 +41,9 @@ class ZhihuHotSpider:
         await self.session.close()
 
     async def update_dc0(self):
+        """
+        不带dc0获取不到正文页，随便请求一个问题就能拿到dc0；隔段时间要更新
+        """
         async with self.session.get("https://www.zhihu.com/question/19996225") as response:
             cookies_dc0 = str(response.cookies.get("d_c0"))
             re_dc0 = re.search('d_c0=\"(.*?)\";', cookies_dc0)
@@ -52,7 +55,6 @@ class ZhihuHotSpider:
                 logging.warning("dc0更新失败")
 
     async def make_session(self, loop):
-
         self.session = aiohttp.ClientSession(loop=loop, headers=self.default_headers)
         await self.update_dc0()
 

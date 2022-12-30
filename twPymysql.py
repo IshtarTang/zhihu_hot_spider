@@ -34,17 +34,19 @@ class Connection(object):
         return self._db.cursor()
 
     def _ensure_connected(self):
-        # 默认情况下，客户端空闲8小时mysql会关闭连接，而客户端并不会报告，会直接在操作时报错，所以每隔7小时重连一次
+        # 确认连接状态
+        # 默认情况下，客户端空闲8小时mysql会关闭连接，而且客户端并不会报告，会直接在操作时报错，所以每隔7小时重连一次
         if self._db is None or (time.time() - self._last_use_time > self.max_idle_time):
             self.reconnect()
         self._last_use_time = time.time()
 
     def reconnect(self):
+        # 重连
         self.close()
         self._db = pymysql.connect(**self._db_args)
 
     def close(self):
-        # 用getattr避免init没跑完就del导致暴毙
+        # 关闭，用getattr避免init没跑完就del导致暴毙
         if getattr(self, "_db", None) is not None:
             self._db.close()
             self._db = None
@@ -52,9 +54,9 @@ class Connection(object):
     def __del__(self):
         self.close()
 
-    # ============查询方法===============
+    # ============以下是数据库操作===============
     def getOne(self, query, *parameters, **kwparameters):
-        # select 获取一行
+        #  获取一行内容
         cursor = self._cursor()
         try:
             cursor.execute(query, parameters or kwparameters)
@@ -64,7 +66,7 @@ class Connection(object):
             cursor.close()
 
     def getMany(self, sql, size=0, *parameters, **kwparameters):
-        # 获取一堆
+        # 获取多行内容
         curosr = self._cursor()
         try:
             curosr.execute(sql, kwparameters or parameters)
@@ -77,6 +79,7 @@ class Connection(object):
             curosr.close()
 
     def execute(self, sql, *parameters, **kwparameters):
+        # 真正执行sql语句的地方
         cursor = self._cursor()
         changed_num = 0
         try:
@@ -94,12 +97,13 @@ class Connection(object):
         return changed_num
 
     def table_has(self, table_name, field, value):
+        # 查询表
         sql = "select * from {} where {} = {}".format(table_name, field, value)
         result = self.getOne(sql)
         return result
 
     def table_insert(self, table_name, fild_item):
-        # item is a dict : key is mysql table field
+        # 向表中插入信息
         fields = list(fild_item.keys())
         values = list(fild_item.values())
         fieldsstr = ",".join(fields)
